@@ -27,12 +27,13 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18.x'
-        cache: ${{ steps.check_package.outputs.exists == 'true' && 'npm' || 'none' }}
+        cache: 'none'  # Explicitly disable caching since we don't have lock files
         
     - name: Process Node.js related checks
       if: steps.check_package.outputs.exists == 'true'
       run: |
         echo "Installing dependencies..."
+        npm install --package-lock-only
         npm install
         
         echo "Checking for linting configuration..."
