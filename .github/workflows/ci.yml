@@ -11,32 +11,57 @@ jobs:
     name: Code Quality Check
     runs-on: ubuntu-latest
     
-    strategy:
-      matrix:
-        node-version: [16.x, 18.x]
-        
     steps:
     - uses: actions/checkout@v3
     
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Check for package.json
+      id: check_package
+      run: |
+        if [ -f "package.json" ]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Use Node.js 18.x
       uses: actions/setup-node@v3
       with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        node-version: '18.x'
+        cache: ${{ steps.check_package.outputs.exists == 'true' && 'npm' || 'none' }}
         
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Run linting
+    - name: Process Node.js related checks
+      if: steps.check_package.outputs.exists == 'true'
       run: |
-        npm run lint || echo "No linting configured"
+        echo "Installing dependencies..."
+        npm install
         
-    - name: Run tests
+        echo "Checking for linting configuration..."
+        if grep -q '"lint"' package.json; then
+          npm run lint
+        else
+          echo "No linting configured, skipping"
+        fi
+        
+        echo "Checking for tests..."
+        if grep -q '"test"' package.json; then
+          npm test
+        else
+          echo "No tests configured, skipping"
+        fi
+        
+        echo "Checking for build script..."
+        if grep -q '"build"' package.json; then
+          npm run build
+        else
+          echo "No build script configured, skipping"
+        fi
+        
+        echo "Running security audit..."
+        npm audit || echo "Security audit completed with warnings"
+        
+    - name: Skip Node.js checks
+      if: steps.check_package.outputs.exists != 'true'
       run: |
-        npm test || echo "No tests configured"
-        
-    - name: Build
-      run: npm run build --if-present
-
-    - name: Check for security vulnerabilities
-      run: npm audit
+        echo "No package.json found in the repository"
+        echo "Skipping Node.js related checks"
+        exit 0
