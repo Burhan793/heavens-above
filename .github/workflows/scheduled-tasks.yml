@@ -1,35 +1,23 @@
-name: Scheduled Maintenance
+name: Scheduled Data Update
 
 on:
   schedule:
-    - cron: '0 2 * * *'   # daily at 02:00 UTC — change as needed
-  workflow_dispatch:      # allow manual run
+    - cron: '0 0 * * 0'
 
 jobs:
-  maintenance:
+  update-data:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.x
-
-      - name: Install deps
-        run: npm ci
-
-      - name: Run maintenance script (backup)
-        env:
-          BACKUP_BUCKET: ${{ secrets.BACKUP_BUCKET }}   # optional
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: |
-          # Example: runs a node script that creates a backup file and uploads to storage
-          node scripts/backup.js
-      - name: Upload backup artifact
-        uses: actions/upload-artifact@v4
+          node-version: '12'
+      - name: Install dependencies
+        run: npm install
+      - name: Run Scraper
+        run: node run.js
+      - name: Commit and Push Updates
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          name: daily-backup
-          path: backups/
+          commit_message: 'Automated data update'

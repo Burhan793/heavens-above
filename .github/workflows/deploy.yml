@@ -1,61 +1,25 @@
-name: Deploy
+name: Deployment Pipeline
 
 on:
   push:
-    branches:
-      - main
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+    branches: [ main ]
 
 jobs:
-  build:
-    name: Build
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.x
-          cache: 'npm'
-
-      - name: Install
-        run: npm ci
-
-      - name: Run build
-        run: npm run build
-
-      - name: Archive production build
-        uses: actions/upload-artifact@v4
-        with:
-          name: prod-build
-          path: build/   # change to dist/ if project uses dist
-
-  deploy-to-pages:
-    name: Deploy to GitHub Pages
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download build
-        uses: actions/download-artifact@v4
-        with:
-          name: prod-build
-          path: deploy_artifact
-
-      - name: Setup Git config
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
+          node-version: '12'
+      - name: Install dependencies
+        run: npm install
+      - name: Build (Run Scraper)
+        run: node run.js
+      - name: Test
+        run: npm test
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          publish_dir: deploy_artifact/build   # change to deploy_artifact/dist if needed
-          destination_dir: ''
-          # token is automatically provided by GITHUB_TOKEN
-
-# Optional: If you prefer Heroku deployment, replace the deploy-to-pages job with a Heroku deploy job that uses HEROKU_API_KEY secret.
+          folder: public

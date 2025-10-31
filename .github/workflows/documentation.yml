@@ -1,35 +1,18 @@
-name: Docs CI / Deploy
+name: Documentation Deployment
 
 on:
   push:
+    branches: [ main ]
     paths:
+      - 'README.md'
       - 'docs/**'
-      - '.github/workflows/documentation.yml'
-  workflow_dispatch:
 
 jobs:
-  build-docs:
+  deploy-docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          node-version: 18.x
-
-      - name: Install deps
-        run: npm ci
-
-      - name: Build docs (mkdocs or custom)
-        run: |
-          # Example for mkdocs:
-          # pip install mkdocs mkdocs-material
-          # mkdocs build -d site
-          # Example for a node-based docs builder (docusaurus, vuepress)
-          npm run docs:build
-
-      - name: Deploy docs to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          publish_dir: build/docs || site || docs_build   # set to your actual docs output folder
+          folder: .

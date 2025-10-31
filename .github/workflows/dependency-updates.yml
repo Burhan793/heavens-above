@@ -1,0 +1,25 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+
+jobs:
+  update-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '12'
+      - name: Install dependencies
+        run: npm install
+      - name: Check for updates
+        run: npm outdated --json > outdated.json
+      - name: Create PR if updates available
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: Update dependencies
+          title: Automated dependency updates
+          body: Updated dependencies based on npm outdated.

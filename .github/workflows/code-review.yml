@@ -1,51 +1,25 @@
-name: Code Review & Security Scans
+name: Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    branches: [ main ]
 
 jobs:
-  lint-and-audit:
+  review:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.x
-
-      - name: Install
-        run: npm ci
-
-      - name: ESLint (fail PR if issues)
-        run: |
-          npm run lint || (echo "::error::ESLint failed" && exit 1)
-
-      - name: Run npm audit (security)
-        run: |
-          npm audit --json > audit.json || true
-          # Upload audit JSON for reviewer download
-      - name: Upload audit.json
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-audit
-          path: audit.json
-
-  codeql:
-    name: CodeQL analysis
-    runs-on: ubuntu-latest
-    needs: lint-and-audit
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+          node-version: '12'
+      - name: Install dependencies
+        run: npm install
+      - name: Lint
+        run: npx eslint .
+      - name: Test
+        run: npm test
+      - name: Security Scan
+        uses: github/codeql-action/analyze@v3
         with:
           languages: javascript
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
-
-      - name: Run CodeQL
-        uses: github/codeql-action/analyze@v2
