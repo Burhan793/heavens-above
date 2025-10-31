@@ -1,0 +1,6 @@
+{
+    "appName": "heavens-above",
+    "runtimeStack": "NODE|18-lts",
+    "region": "eastus",
+    "sku": "F1"
+}

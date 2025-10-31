@@ -6,8 +6,22 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build-and-test:
     runs-on: ubuntu-latest
+    
+  deploy-staging:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     
     steps:
     - uses: actions/checkout@v3

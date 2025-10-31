@@ -1,0 +1,15 @@
+{
+  extends: [
+    'eslint:recommended',
+    'plugin:security/recommended'
+  ],
+  plugins: [
+    'security'
+  ],
+  rules: {
+    'security/detect-possible-timing-attacks': 'error',
+    'security/detect-eval-with-expression': 'error',
+    'security/detect-non-literal-require': 'error',
+    'security/detect-non-literal-fs-filename': 'error'
+  }
+}

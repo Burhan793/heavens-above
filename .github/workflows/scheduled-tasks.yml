@@ -19,8 +19,22 @@ jobs:
         
     - name: Backup data
       run: |
-        echo "Performing daily backup..."
-        # Add backup script commands here
+        echo "Starting daily backup process..."
+        # Create backup directory
+        mkdir -p backups
+        
+        # Backup database (if exists)
+        if [ -f "database.json" ]; then
+          cp database.json backups/database_$(date +%Y%m%d).json
+        fi
+        
+        # Backup configuration files
+        tar -czf backups/config_$(date +%Y%m%d).tar.gz .github/
+        
+        # Upload backup to Azure Storage
+        if [ -n "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" ]; then
+          az storage blob upload-batch -d backups -s backups/ --connection-string "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}"
+        fi
         
     - name: Update cached data
       run: |
