@@ -1,0 +1,43 @@
+name: Scheduled Tasks
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
+  workflow_dispatch:
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        
+    - name: Backup data
+      run: |
+        echo "Performing daily backup..."
+        # Add backup script commands here
+        
+    - name: Update cached data
+      run: |
+        echo "Updating cached data..."
+        # Add cache update commands here
+        
+    - name: Cleanup old artifacts
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const script = require('./.github/scripts/cleanup.js')
+          await script({github, context})
+          
+    - name: Send status report
+      if: always()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const script = require('./.github/scripts/report.js')
+          await script({github, context, core})

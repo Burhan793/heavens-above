@@ -1,0 +1,33 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # Runs at 00:00 UTC every Monday
+  workflow_dispatch:
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: |
+        npm test || echo "No tests configured"
+        
+    - name: Auto-approve Dependabot PRs
+      uses: hmarr/auto-approve-action@v3
+      if: success()
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}

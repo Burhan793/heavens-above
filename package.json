@@ -1,0 +1,25 @@
+{
+  "name": "heavens-above-automation",
+  "version": "1.0.0",
+  "description": "Automation workflows for heavens-above project",
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint .",
+    "build": "webpack --mode production",
+    "start": "node server.js",
+    "docs": "docsify serve docs"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "jest": "^27.0.6",
+    "eslint": "^7.32.0",
+    "webpack": "^5.52.0",
+    "webpack-cli": "^4.8.0",
+    "docsify-cli": "^4.4.3"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
