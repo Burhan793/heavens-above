@@ -1,0 +1,20 @@
+{
+    "rules": [
+        {
+            "enabled": true,
+            "name": "backup-retention",
+            "type": "Lifecycle",
+            "definition": {
+                "filters": {
+                    "blobTypes": [ "blockBlob" ],
+                    "prefixMatch": [ "backups/" ]
+                },
+                "actions": {
+                    "baseBlob": {
+                        "delete": { "daysAfterModificationGreaterThan": 30 }
+                    }
+                }
+            }
+        }
+    ]
+}
