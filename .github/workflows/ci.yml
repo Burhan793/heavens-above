@@ -26,8 +26,7 @@ jobs:
     - name: Use Node.js 18.x
       uses: actions/setup-node@v3
       with:
-        node-version: '18.x'
-        cache: 'none'  # Explicitly disable caching since we don't have lock files
+        node-version: '18.x'  # Remove cache property entirely
         
     - name: Process Node.js related checks
       if: steps.check_package.outputs.exists == 'true'
