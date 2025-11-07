@@ -3,6 +3,7 @@ name: Scheduled Data Update
 on:
   schedule:
     - cron: '0 0 * * 0'
+  workflow_dispatch:
 
 jobs:
   update-data:
@@ -12,7 +13,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '12'
+          node-version: '18'
       - name: Install dependencies
         run: npm install
       - name: Run Scraper

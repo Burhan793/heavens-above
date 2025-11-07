@@ -12,14 +12,25 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '12'
+          node-version: '18'
       - name: Install dependencies
         run: npm install
       - name: Lint
         run: npx eslint .
       - name: Test
         run: npm test
-      - name: Security Scan
-        uses: github/codeql-action/analyze@v3
+      
+  security:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
           languages: javascript
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

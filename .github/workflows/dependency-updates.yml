@@ -3,6 +3,7 @@ name: Dependency Updates
 on:
   schedule:
     - cron: '0 0 * * 1'
+  workflow_dispatch:
 
 jobs:
   update-deps:
@@ -12,14 +13,18 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '12'
+          node-version: '18'
       - name: Install dependencies
         run: npm install
       - name: Check for updates
-        run: npm outdated --json > outdated.json
+        run: npm outdated --json > outdated.json || true
+      - name: Update dependencies
+        run: npm update
       - name: Create PR if updates available
         uses: peter-evans/create-pull-request@v6
         with:
           commit-message: Update dependencies
           title: Automated dependency updates
           body: Updated dependencies based on npm outdated.
+          branch: dependency-updates
+          labels: dependencies

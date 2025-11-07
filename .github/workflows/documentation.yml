@@ -12,7 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy to GitHub Pages
+      - name: Create docs folder
+        run: |
+          mkdir -p docs-build
+          cp README.md docs-build/
+          if [ -d "docs" ]; then
+            cp -r docs/* docs-build/
+          fi
+      - name: Deploy Documentation to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: .
+          folder: docs-build
+          target-folder: docs
+          clean: false
