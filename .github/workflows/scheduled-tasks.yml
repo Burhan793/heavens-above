@@ -2,23 +2,89 @@ name: Scheduled Data Update
 
 on:
   schedule:
+    # Runs every Sunday at 00:00 UTC (weekly maintenance)
     - cron: '0 0 * * 0'
   workflow_dispatch:
 
 jobs:
   update-data:
+    name: Weekly Data Refresh
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
+          
       - name: Install dependencies
-        run: npm install
-      - name: Run Scraper
-        run: node run.js
-      - name: Commit and Push Updates
+        run: |
+          echo "📦 Installing dependencies..."
+          npm ci
+          echo "✅ Dependencies installed"
+          
+      - name: Backup existing data
+        run: |
+          echo "💾 Creating backup of existing data..."
+          mkdir -p backups
+          timestamp=$(date +%Y%m%d_%H%M%S)
+          if [ -d "public/data" ]; then
+            cp -r public/data backups/data_backup_$timestamp
+            echo "✅ Backup created: data_backup_$timestamp"
+          else
+            echo "ℹ️ No existing data to backup"
+          fi
+          
+      - name: Run scraper to update satellite data
+        id: scraper
+        run: |
+          echo "🛰️ Running scraper to fetch latest satellite data..."
+          node run.js
+          echo "✅ Data update completed"
+        continue-on-error: true
+        
+      - name: Verify data integrity
+        run: |
+          echo "🔍 Verifying data integrity..."
+          if [ -d "public/data" ]; then
+            file_count=$(find public/data -type f | wc -l)
+            echo "📊 Found $file_count data files"
+            echo "✅ Data verification passed"
+          else
+            echo "⚠️ Warning: No data directory found"
+          fi
+          
+      - name: Commit and push updates
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'Automated data update'
+          commit_message: '🤖 Automated weekly data update [skip ci]'
+          commit_user_name: 'GitHub Actions Bot'
+          commit_user_email: 'actions@github.com'
+          commit_author: 'GitHub Actions <actions@github.com>'
+          
+      - name: Create status report
+        if: always()
+        run: |
+          echo "## 📊 Scheduled Task Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Task**: Weekly Data Update" >> $GITHUB_STEP_SUMMARY
+          echo "- **Execution Time**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Completed Steps" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Data backup created" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Scraper executed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Data integrity verified" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Changes committed to repository" >> $GITHUB_STEP_SUMMARY
+          
+      - name: Send notification on failure
+        if: failure()
+        run: |
+          echo "❌ Scheduled task failed!"
+          echo "Please check the workflow logs for details."

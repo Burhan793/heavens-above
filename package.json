@@ -5,10 +5,12 @@
   "description": "Scripts for scraping the Heavens Above website.",
   "main": "run.js",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --watchAll=false",
-    "lint": "eslint src --ext .js,.jsx"
+    "start": "node run.js",
+    "build": "node run.js",
+    "test": "jest --coverage --passWithNoTests",
+    "test:watch": "jest --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.3",
@@ -16,18 +18,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PKUPI/heavens-above.git"
+    "url": "git+https://github.com/Burhan793/heavens-above.git"
   },
   "keywords": [
     "Heavens Above",
-    "spider"
+    "spider",
+    "satellite tracking"
   ],
   "author": "Mimi <stevenjoezhang@gmail.com> (https://zhangshuqiao.org)",
   "license": "GPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/PKUPI/heavens-above/issues"
+    "url": "https://github.com/Burhan793/heavens-above/issues"
   },
-  "homepage": "https://github.com/PKUPI/heavens-above#readme",
+  "homepage": "https://github.com/Burhan793/heavens-above#readme",
   "engines": {
     "node": ">=18.10.0"
   },

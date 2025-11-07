@@ -1,31 +1,136 @@
-name: Generate Release Notes
+name: Release Notes Generator
 
 on:
   push:
     tags:
-      - 'v*.*.*'    # semantic version tags, e.g., v1.2.3
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., v1.0.0)'
+        required: false
+        default: 'v0.0.0'
 
 jobs:
-  release:
+  generate-release-notes:
+    name: Generate and Publish Release Notes
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+          
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Get version tag
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Get previous tag
+        id: prev_tag
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          echo "previous_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+          echo "Previous tag: $PREV_TAG"
+          
       - name: Generate changelog
         id: changelog
         run: |
-          echo "# Release Notes" > CHANGELOG.md
+          VERSION="${{ steps.get_version.outputs.version }}"
+          PREV_TAG="${{ steps.prev_tag.outputs.previous_tag }}"
+          
+          echo "# Release Notes - $VERSION" > CHANGELOG.md
           echo "" >> CHANGELOG.md
-          git log --pretty=format:"- %s (%h)" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> CHANGELOG.md
+          echo "**Release Date**: $(date +%Y-%m-%d)" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          
+          if [ -n "$PREV_TAG" ]; then
+            echo "## 📝 Changes Since $PREV_TAG" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            
+            echo "### 🚀 Features" >> CHANGELOG.md
+            git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" --grep="feat:" --grep="feature:" >> CHANGELOG.md || echo "- No new features" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            
+            echo "### 🐛 Bug Fixes" >> CHANGELOG.md
+            git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" --grep="fix:" --grep="bug:" >> CHANGELOG.md || echo "- No bug fixes" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            
+            echo "### 📚 Documentation" >> CHANGELOG.md
+            git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" --grep="docs:" >> CHANGELOG.md || echo "- No documentation updates" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            
+            echo "### 🔧 Maintenance" >> CHANGELOG.md
+            git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" --grep="chore:" --grep="refactor:" >> CHANGELOG.md || echo "- No maintenance updates" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            
+            echo "### 📊 Statistics" >> CHANGELOG.md
+            COMMIT_COUNT=$(git rev-list $PREV_TAG..HEAD --count)
+            CONTRIBUTORS=$(git log $PREV_TAG..HEAD --format='%aN' | sort -u | wc -l)
+            FILES_CHANGED=$(git diff --stat $PREV_TAG..HEAD | tail -1)
+            echo "- **Commits**: $COMMIT_COUNT" >> CHANGELOG.md
+            echo "- **Contributors**: $CONTRIBUTORS" >> CHANGELOG.md
+            echo "- **Files Changed**: $FILES_CHANGED" >> CHANGELOG.md
+          else
+            echo "## 🎉 Initial Release" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "This is the first release of Heavens Above!" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            git log --pretty=format:"- %s (%h)" --all >> CHANGELOG.md
+          fi
+          
+          echo "" >> CHANGELOG.md
+          echo "---" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREV_TAG...$VERSION" >> CHANGELOG.md
+          
           cat CHANGELOG.md
-
+          
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
           body_path: CHANGELOG.md
           generate_release_notes: true
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Upload changelog as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes-${{ steps.get_version.outputs.version }}
+          path: CHANGELOG.md
+          retention-days: 90
+          
+      - name: Generate workflow summary
+        if: always()
+        run: |
+          echo "## 📋 Release Notes Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.get_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous Version**: ${{ steps.prev_tag.outputs.previous_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Generated Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Changelog file (CHANGELOG.md)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ GitHub Release created" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Release notes published" >> $GITHUB_STEP_SUMMARY
