@@ -1,0 +1,9 @@
+{
+  "eslint": {
+    "current": "9.38.0",
+    "wanted": "9.39.1",
+    "latest": "9.39.1",
+    "dependent": "heavens-above",
+    "location": "/home/runner/work/heavens-above/heavens-above/node_modules/eslint"
+  }
+}
