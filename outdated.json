@@ -1,0 +1,16 @@
+{
+  "eslint": {
+    "current": "9.38.0",
+    "wanted": "9.39.4",
+    "latest": "9.39.4",
+    "dependent": "heavens-above",
+    "location": "/home/runner/work/heavens-above/heavens-above/node_modules/eslint"
+  },
+  "jest": {
+    "current": "30.2.0",
+    "wanted": "30.3.0",
+    "latest": "30.3.0",
+    "dependent": "heavens-above",
+    "location": "/home/runner/work/heavens-above/heavens-above/node_modules/jest"
+  }
+}
